@@ -1,0 +1,55 @@
+Function OttieniSettoreMerceologico(ByVal inputText As String) As String
+    On Error GoTo ErrorHandler
+
+    Dim http As Object
+    Dim url As String
+    Dim apiKey As String
+    Dim question As String
+    Dim jsonBody As String
+    Dim responseText As String
+    Dim jsonResponse As Object
+    Dim result As String
+
+    ' Imposta la tua chiave API qui
+    apiKey = "INTRODUCI QUI LA TUA API KEY DI CHATGPT / IMPUT YOUR CHATGPT KEY HERE"
+
+    ' Imposta l'URL dell'API di OpenAI
+    url = "https://api.openai.com/v1/chat/completions"
+
+    ' La domanda che vuoi fare a ChatGPT
+    question = "analizza il testo del sito internet di questa azienda messicana e descrivimi in meno di 50 caratteri il settore economico in cui operano. Generalmente si tratta del settore IT."
+
+    ' Creazione del corpo del JSON da inviare con la richiesta
+    jsonBody = "{""model"": ""gpt-4o"", ""messages"": [{""role"": ""user"", ""content"": """ & question & " " & inputText & """}], ""max_tokens"": 100}"
+
+    ' Creazione dell'oggetto HTTP
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    With http
+        .Open "POST", url, False
+        .setRequestHeader "Content-Type", "application/json"
+        .setRequestHeader "Authorization", "Bearer " & apiKey
+        .send jsonBody
+        responseText = .responseText
+    End With
+
+    ' Debug: stampa il JSON di risposta per verifica
+    Debug.Print responseText
+
+    ' Utilizza JsonConverter per analizzare il JSON
+    Set jsonResponse = JsonConverter.ParseJson(responseText)
+
+    ' Verifica se la risposta contiene un errore
+    If jsonResponse.Exists("error") Then
+        OttieniSettoreMerceologico = "Errore dell'API: " & jsonResponse("error")("message")
+    ElseIf jsonResponse.Exists("choices") Then
+        result = jsonResponse("choices")(1)("message")("content")
+        OttieniSettoreMerceologico = Trim(result)
+    Else
+        OttieniSettoreMerceologico = "Errore: Risposta inattesa dall'API"
+    End If
+
+    Exit Function
+
+ErrorHandler:
+    OttieniSettoreMerceologico = "Errore: " & Err.Description
+End Function
